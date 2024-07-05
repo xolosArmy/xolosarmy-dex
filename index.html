@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xolosArmy Network State DEX</title>
-    <script src="https://unpkg.com/@bitcoin-abc/bitcoin-cash-js-lib@0.20.1/dist/bitcoincash-0.20.1.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -66,8 +65,8 @@
     <main>
         <div id="walletInfo">
             <h2>Wallet Information</h2>
-            <p>Address: <span id="walletAddress"></span></p>
-            <p>Balance: <span id="walletBalance"></span> XEC</p>
+            <p>Address: <span id="walletAddress">Not connected</span></p>
+            <p>Balance: <span id="walletBalance">0</span> XEC</p>
             <button onclick="connectWallet()">Connect Wallet</button>
         </div>
         <h2>Exchange eCash for Xolos $RMZ</h2>
@@ -85,45 +84,50 @@
     <script>
         const tokenId = '9e0a9d4720782cf661beaea6c5513f1972e0f3b1541ba4c83f4c87ef65f843dc';
         const explorerBaseUrl = 'https://explorer.e.cash/tx/';
-        let wallet;
+        let wallet = null;
 
         async function connectWallet() {
+            const statusDiv = document.getElementById('status');
             try {
-                if (typeof window.bitcoincash === 'undefined') {
-                    throw new Error('eCash wallet not detected. Please install Cashtab extension.');
+                if (typeof window.bitcoincash !== 'undefined') {
+                    const accounts = await window.bitcoincash.request({ method: 'request_accounts' });
+                    if (accounts.length === 0) {
+                        throw new Error('No accounts found. Please create an account in your eCash wallet.');
+                    }
+                    wallet = accounts[0];
+                    document.getElementById('walletAddress').textContent = wallet;
+                    
+                    // Fetch balance (this is a simplified example)
+                    const balance = await window.bitcoincash.request({ method: 'get_balance', params: [wallet] });
+                    document.getElementById('walletBalance').textContent = balance / 100; // Convert satoshis to XEC
+                    
+                    statusDiv.textContent = 'Wallet connected successfully!';
+                } else {
+                    throw new Error('eCash wallet not detected. Please install a compatible wallet extension.');
                 }
-                
-                const accounts = await window.bitcoincash.request({ method: 'request_accounts' });
-                if (accounts.length === 0) {
-                    throw new Error('No accounts found. Please create an account in your eCash wallet.');
-                }
-
-                wallet = accounts[0];
-                document.getElementById('walletAddress').textContent = wallet;
-                
-                // Fetch balance (this is a simplified example, you may need to use a different method)
-                const balance = await window.bitcoincash.request({ method: 'get_balance', params: [wallet] });
-                document.getElementById('walletBalance').textContent = balance / 100; // Convert satoshis to XEC
-                
-                document.getElementById('status').textContent = 'Wallet connected successfully!';
             } catch (error) {
-                document.getElementById('status').textContent = `Error connecting wallet: ${error.message}`;
+                statusDiv.textContent = `Error connecting wallet: ${error.message}`;
+                console.error('Wallet connection error:', error);
             }
         }
 
         async function exchange() {
+            const statusDiv = document.getElementById('status');
             if (!wallet) {
-                document.getElementById('status').textContent = 'Please connect your wallet first.';
+                statusDiv.textContent = 'Please connect your wallet first.';
                 return;
             }
 
             const ecashAmount = document.getElementById('ecashAmount').value;
             const xolosAddress = document.getElementById('xolosAddress').value;
-            const statusDiv = document.getElementById('status');
 
             statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
 
             try {
+                if (typeof window.bitcoincash === 'undefined') {
+                    throw new Error('eCash wallet not detected. Please install a compatible wallet extension.');
+                }
+
                 // Create a simple send transaction (this is a simplified example)
                 const txParams = {
                     to: xolosAddress,
@@ -141,6 +145,7 @@
                 addTransactionToHistory(txHash, ecashAmount);
             } catch (error) {
                 statusDiv.textContent = `Error: ${error.message}`;
+                console.error('Exchange error:', error);
             }
         }
 
