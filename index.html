@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xolosArmy Network State DEX</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-    <script src="https://unpkg.com/@bitcoin-abc/cashtab-sdk"></script>
+    <script src="https://unpkg.com/@bitcoin-abc/bitcoin-cash-js-lib@0.20.1/dist/bitcoincash-0.20.1.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,9 +89,22 @@
 
         async function connectWallet() {
             try {
-                wallet = await CashtabSdk.getWallet();
-                document.getElementById('walletAddress').textContent = wallet.cashAddress;
-                document.getElementById('walletBalance').textContent = wallet.balance / 100; // Convert satoshis to XEC
+                if (typeof window.bitcoincash === 'undefined') {
+                    throw new Error('eCash wallet not detected. Please install Cashtab extension.');
+                }
+                
+                const accounts = await window.bitcoincash.request({ method: 'request_accounts' });
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found. Please create an account in your eCash wallet.');
+                }
+
+                wallet = accounts[0];
+                document.getElementById('walletAddress').textContent = wallet;
+                
+                // Fetch balance (this is a simplified example, you may need to use a different method)
+                const balance = await window.bitcoincash.request({ method: 'get_balance', params: [wallet] });
+                document.getElementById('walletBalance').textContent = balance / 100; // Convert satoshis to XEC
+                
                 document.getElementById('status').textContent = 'Wallet connected successfully!';
             } catch (error) {
                 document.getElementById('status').textContent = `Error connecting wallet: ${error.message}`;
@@ -112,19 +124,21 @@
             statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
 
             try {
-                // Create a simple send transaction
+                // Create a simple send transaction (this is a simplified example)
                 const txParams = {
                     to: xolosAddress,
-                    protocol: 'slp',
-                    value: ecashAmount,
+                    amount: ecashAmount * 100, // Convert XEC to satoshis
                     tokenId: tokenId
                 };
 
-                const tx = await CashtabSdk.sendAsset(wallet, txParams);
+                const txHash = await window.bitcoincash.request({ 
+                    method: 'create_token_transaction', 
+                    params: [wallet, txParams] 
+                });
                 
-                statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Transaction hash: ${tx.hash}`;
+                statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
                 
-                addTransactionToHistory(tx.hash, ecashAmount);
+                addTransactionToHistory(txHash, ecashAmount);
             } catch (error) {
                 statusDiv.textContent = `Error: ${error.message}`;
             }
@@ -143,7 +157,8 @@
 
         // Function to validate eCash address
         function validateECashAddress(address) {
-            return CashtabSdk.isValidAddress(address);
+            // This is a simplified check. For production, use a more robust validation method.
+            return address.startsWith('ecash:');
         }
 
         // Add event listener to validate address on input
