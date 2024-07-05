@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xolosArmy Network State DEX</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.2/web3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #4a4a4a;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+        }
+        h1 {
+            margin-bottom: 0;
+        }
+        main {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .exchange-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>xolosArmy Network State DEX</h1>
+        <p>A decentralized exchange for Xolos $RMZ SLP1 Token</p>
+    </header>
+    <main>
+        <h2>Exchange eCash for Xolos $RMZ</h2>
+        <div class="exchange-form">
+            <input type="number" id="ecashAmount" placeholder="eCash amount">
+            <input type="text" id="xolosAddress" placeholder="Your Xolos $RMZ address">
+            <button onclick="exchange()">Exchange</button>
+        </div>
+        <div id="status"></div>
+    </main>
+    <script>
+        const tokenId = '9e0a9d4720782cf661beaea6c5513f1972e0f3b1541ba4c83f4c87ef65f843dc';
+
+        async function exchange() {
+            const ecashAmount = document.getElementById('ecashAmount').value;
+            const xolosAddress = document.getElementById('xolosAddress').value;
+            const statusDiv = document.getElementById('status');
+
+            // This is a placeholder for actual blockchain interaction
+            statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
+
+            // Simulating blockchain delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // This is where you would typically interact with the eCash network and SLP token contract
+            statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Tokens sent to ${xolosAddress}`;
+        }
+    </script>
+</body>
+</html>
