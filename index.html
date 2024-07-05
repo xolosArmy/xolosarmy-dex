@@ -89,17 +89,18 @@
         async function connectWallet() {
             const statusDiv = document.getElementById('status');
             try {
-                if (typeof window.bitcoincash !== 'undefined') {
-                    const accounts = await window.bitcoincash.request({ method: 'request_accounts' });
+                if (typeof window.ecash !== 'undefined') {
+                    const accounts = await window.ecash.request({ method: 'eth_requestAccounts' });
                     if (accounts.length === 0) {
                         throw new Error('No accounts found. Please create an account in your eCash wallet.');
                     }
                     wallet = accounts[0];
                     document.getElementById('walletAddress').textContent = wallet;
                     
-                    // Fetch balance (this is a simplified example)
-                    const balance = await window.bitcoincash.request({ method: 'get_balance', params: [wallet] });
-                    document.getElementById('walletBalance').textContent = balance / 100; // Convert satoshis to XEC
+                    // Fetch balance
+                    const balance = await window.ecash.request({ method: 'eth_getBalance', params: [wallet, 'latest'] });
+                    const balanceInXec = parseInt(balance, 16) / 1e8; // Convert wei to XEC
+                    document.getElementById('walletBalance').textContent = balanceInXec.toFixed(8);
                     
                     statusDiv.textContent = 'Wallet connected successfully!';
                 } else {
@@ -124,23 +125,24 @@
             statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
 
             try {
-                if (typeof window.bitcoincash === 'undefined') {
+                if (typeof window.ecash === 'undefined') {
                     throw new Error('eCash wallet not detected. Please install a compatible wallet extension.');
                 }
 
-                // Create a simple send transaction (this is a simplified example)
+                // Create a simple send transaction
                 const txParams = {
+                    from: wallet,
                     to: xolosAddress,
-                    amount: ecashAmount * 100, // Convert XEC to satoshis
-                    tokenId: tokenId
+                    value: '0x' + (ecashAmount * 1e8).toString(16), // Convert XEC to satoshis, then to hex
+                    data: tokenId // Include token ID in the data field
                 };
 
-                const txHash = await window.bitcoincash.request({ 
-                    method: 'create_token_transaction', 
-                    params: [wallet, txParams] 
+                const txHash = await window.ecash.request({ 
+                    method: 'eth_sendTransaction', 
+                    params: [txParams]
                 });
                 
-                statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
+                statusDiv.textContent = `Exchange initiated! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
                 
                 addTransactionToHistory(txHash, ecashAmount);
             } catch (error) {
@@ -163,7 +165,7 @@
         // Function to validate eCash address
         function validateECashAddress(address) {
             // This is a simplified check. For production, use a more robust validation method.
-            return address.startsWith('ecash:');
+            return address.startsWith('ecash:') || address.startsWith('0x');
         }
 
         // Add event listener to validate address on input
