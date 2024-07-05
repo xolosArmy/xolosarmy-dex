@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xolosArmy Network State DEX</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.2/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://unpkg.com/@bitcoin-abc/cashtab-sdk"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,9 +50,12 @@
         button:hover {
             background-color: #45a049;
         }
-        #status {
+        #status, #transactionHistory, #walletInfo {
             margin-top: 20px;
-            font-weight: bold;
+        }
+        #transactionHistory, #walletInfo {
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
         }
     </style>
 </head>
@@ -61,6 +65,12 @@
         <p>A decentralized exchange for Xolos $RMZ SLP1 Token</p>
     </header>
     <main>
+        <div id="walletInfo">
+            <h2>Wallet Information</h2>
+            <p>Address: <span id="walletAddress"></span></p>
+            <p>Balance: <span id="walletBalance"></span> XEC</p>
+            <button onclick="connectWallet()">Connect Wallet</button>
+        </div>
         <h2>Exchange eCash for Xolos $RMZ</h2>
         <div class="exchange-form">
             <input type="number" id="ecashAmount" placeholder="eCash amount">
@@ -68,24 +78,82 @@
             <button onclick="exchange()">Exchange</button>
         </div>
         <div id="status"></div>
+        <div id="transactionHistory">
+            <h3>Transaction History</h3>
+            <ul id="transactions"></ul>
+        </div>
     </main>
     <script>
         const tokenId = '9e0a9d4720782cf661beaea6c5513f1972e0f3b1541ba4c83f4c87ef65f843dc';
+        const explorerBaseUrl = 'https://explorer.e.cash/tx/';
+        let wallet;
+
+        async function connectWallet() {
+            try {
+                wallet = await CashtabSdk.getWallet();
+                document.getElementById('walletAddress').textContent = wallet.cashAddress;
+                document.getElementById('walletBalance').textContent = wallet.balance / 100; // Convert satoshis to XEC
+                document.getElementById('status').textContent = 'Wallet connected successfully!';
+            } catch (error) {
+                document.getElementById('status').textContent = `Error connecting wallet: ${error.message}`;
+            }
+        }
 
         async function exchange() {
+            if (!wallet) {
+                document.getElementById('status').textContent = 'Please connect your wallet first.';
+                return;
+            }
+
             const ecashAmount = document.getElementById('ecashAmount').value;
             const xolosAddress = document.getElementById('xolosAddress').value;
             const statusDiv = document.getElementById('status');
 
-            // This is a placeholder for actual blockchain interaction
             statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
 
-            // Simulating blockchain delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            try {
+                // Create a simple send transaction
+                const txParams = {
+                    to: xolosAddress,
+                    protocol: 'slp',
+                    value: ecashAmount,
+                    tokenId: tokenId
+                };
 
-            // This is where you would typically interact with the eCash network and SLP token contract
-            statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Tokens sent to ${xolosAddress}`;
+                const tx = await CashtabSdk.sendAsset(wallet, txParams);
+                
+                statusDiv.textContent = `Exchange completed! ${ecashAmount} eCash exchanged for Xolos $RMZ tokens. Transaction hash: ${tx.hash}`;
+                
+                addTransactionToHistory(tx.hash, ecashAmount);
+            } catch (error) {
+                statusDiv.textContent = `Error: ${error.message}`;
+            }
         }
+
+        function addTransactionToHistory(txHash, amount) {
+            const transactionsList = document.getElementById('transactions');
+            const listItem = document.createElement('li');
+            const link = document.createElement('a');
+            link.href = explorerBaseUrl + txHash;
+            link.textContent = `Exchanged ${amount} eCash for Xolos $RMZ - View on Explorer`;
+            link.target = '_blank';
+            listItem.appendChild(link);
+            transactionsList.appendChild(listItem);
+        }
+
+        // Function to validate eCash address
+        function validateECashAddress(address) {
+            return CashtabSdk.isValidAddress(address);
+        }
+
+        // Add event listener to validate address on input
+        document.getElementById('xolosAddress').addEventListener('input', function(e) {
+            if (validateECashAddress(e.target.value)) {
+                e.target.style.borderColor = 'green';
+            } else {
+                e.target.style.borderColor = 'red';
+            }
+        });
     </script>
 </body>
 </html>
