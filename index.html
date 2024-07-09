@@ -89,22 +89,22 @@
         async function connectWallet() {
             const statusDiv = document.getElementById('status');
             try {
-                if (typeof window.ecash !== 'undefined') {
-                    const accounts = await window.ecash.request({ method: 'eth_requestAccounts' });
+                if (typeof window.cashtab !== 'undefined') {
+                    const accounts = await window.cashtab.request({ method: 'xec_requestAccounts' });
                     if (accounts.length === 0) {
-                        throw new Error('No accounts found. Please create an account in your eCash wallet.');
+                        throw new Error('No accounts found. Please create an account in your Cashtab wallet.');
                     }
                     wallet = accounts[0];
                     document.getElementById('walletAddress').textContent = wallet;
                     
                     // Fetch balance
-                    const balance = await window.ecash.request({ method: 'eth_getBalance', params: [wallet, 'latest'] });
-                    const balanceInXec = parseInt(balance, 16) / 1e8; // Convert wei to XEC
+                    const balance = await window.cashtab.request({ method: 'xec_getBalance', params: [wallet] });
+                    const balanceInXec = balance / 100; // Convert satoshis to XEC
                     document.getElementById('walletBalance').textContent = balanceInXec.toFixed(8);
                     
                     statusDiv.textContent = 'Wallet connected successfully!';
                 } else {
-                    throw new Error('eCash wallet not detected. Please install a compatible wallet extension.');
+                    throw new Error('Cashtab wallet not detected. Please install the Cashtab extension.');
                 }
             } catch (error) {
                 statusDiv.textContent = `Error connecting wallet: ${error.message}`;
@@ -125,20 +125,20 @@
             statusDiv.textContent = `Processing exchange of ${ecashAmount} eCash for Xolos $RMZ tokens...`;
 
             try {
-                if (typeof window.ecash === 'undefined') {
-                    throw new Error('eCash wallet not detected. Please install a compatible wallet extension.');
+                if (typeof window.cashtab === 'undefined') {
+                    throw new Error('Cashtab wallet not detected. Please install the Cashtab extension.');
                 }
 
-                // Create a simple send transaction
+                // Create a token send transaction
                 const txParams = {
-                    from: wallet,
                     to: xolosAddress,
-                    value: '0x' + (ecashAmount * 1e8).toString(16), // Convert XEC to satoshis, then to hex
-                    data: tokenId // Include token ID in the data field
+                    value: ecashAmount * 100, // Convert XEC to satoshis
+                    tokenId: tokenId,
+                    type: 'SEND_TOKEN'
                 };
 
-                const txHash = await window.ecash.request({ 
-                    method: 'eth_sendTransaction', 
+                const txHash = await window.cashtab.request({ 
+                    method: 'xec_sendTransaction', 
                     params: [txParams]
                 });
                 
@@ -165,7 +165,7 @@
         // Function to validate eCash address
         function validateECashAddress(address) {
             // This is a simplified check. For production, use a more robust validation method.
-            return address.startsWith('ecash:') || address.startsWith('0x');
+            return address.startsWith('ecash:');
         }
 
         // Add event listener to validate address on input
