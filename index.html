@@ -29,7 +29,7 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .exchange-form {
+        .exchange-form, .liquidity-form {
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -73,8 +73,14 @@
         <h2>Exchange BCH for Xolos $RMZ</h2>
         <div class="exchange-form">
             <input type="number" id="bchAmount" placeholder="BCH amount">
-            <input type="text" id="xolosAddress" placeholder="Your Xolos $RMZ address">
-            <button onclick="exchange()">Exchange</button>
+            <input type="number" id="minTokens" placeholder="Minimum Xolos $RMZ tokens">
+            <button onclick="swapBCHForToken()">Swap BCH for Xolos $RMZ</button>
+        </div>
+        <h2>Add Liquidity</h2>
+        <div class="liquidity-form">
+            <input type="number" id="bchLiquidityAmount" placeholder="BCH amount">
+            <input type="number" id="tokenLiquidityAmount" placeholder="Xolos $RMZ token amount">
+            <button onclick="addLiquidity()">Add Liquidity</button>
         </div>
         <div id="status"></div>
         <div id="transactionHistory">
@@ -83,10 +89,12 @@
         </div>
     </main>
     <script>
-        const tokenAddress = '0x49F9ECF126B6dDF51C731614755508A4674bA7eD';
+        const contractAddress = 'YOUR_DEPLOYED_CONTRACT_ADDRESS';
+        const contractABI = [/* ABI generated from the compiled contract */];
         const explorerBaseUrl = 'https://smartscout.cash/tx/';
-        let wallet = null;
         let web3;
+        let contract;
+        let wallet;
 
         async function connectWallet() {
             const statusDiv = document.getElementById('status');
@@ -106,6 +114,7 @@
                     document.getElementById('walletBalance').textContent = balanceInBCH;
                     
                     statusDiv.textContent = 'Wallet connected successfully!';
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
                 } else {
                     throw new Error('MetaMask wallet not detected. Please install MetaMask.');
                 }
@@ -115,7 +124,28 @@
             }
         }
 
-        async function exchange() {
+        async function addLiquidity() {
+            const statusDiv = document.getElementById('status');
+            if (!wallet) {
+                statusDiv.textContent = 'Please connect your wallet first.';
+                return;
+            }
+
+            const bchAmount = document.getElementById('bchLiquidityAmount').value;
+            const tokenAmount = document.getElementById('tokenLiquidityAmount').value;
+
+            statusDiv.textContent = `Adding ${bchAmount} BCH and ${tokenAmount} Xolos $RMZ tokens to the liquidity pool...`;
+
+            try {
+                await contract.methods.addLiquidity(tokenAmount).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
+                statusDiv.textContent = `Successfully added liquidity: ${bchAmount} BCH and ${tokenAmount} Xolos $RMZ tokens.`;
+            } catch (error) {
+                statusDiv.textContent = `Error: ${error.message}`;
+                console.error('Add liquidity error:', error);
+            }
+        }
+
+        async function swapBCHForToken() {
             const statusDiv = document.getElementById('status');
             if (!wallet) {
                 statusDiv.textContent = 'Please connect your wallet first.';
@@ -123,34 +153,16 @@
             }
 
             const bchAmount = document.getElementById('bchAmount').value;
-            const xolosAddress = document.getElementById('xolosAddress').value;
+            const minTokens = document.getElementById('minTokens').value;
 
-            statusDiv.textContent = `Processing exchange of ${bchAmount} BCH for Xolos $RMZ tokens...`;
+            statusDiv.textContent = `Swapping ${bchAmount} BCH for at least ${minTokens} Xolos $RMZ tokens...`;
 
             try {
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('MetaMask wallet not detected. Please install MetaMask.');
-                }
-
-                // Create a simple send transaction
-                const txParams = {
-                    from: wallet,
-                    to: xolosAddress,
-                    value: web3.utils.toWei(bchAmount, 'ether'), // Convert BCH to wei
-                    data: web3.utils.toHex(tokenAddress) // Include token address in the data field
-                };
-
-                const txHash = await ethereum.request({ 
-                    method: 'eth_sendTransaction', 
-                    params: [txParams]
-                });
-                
-                statusDiv.textContent = `Exchange initiated! ${bchAmount} BCH exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
-                
-                addTransactionToHistory(txHash, bchAmount);
+                await contract.methods.swapBCHForToken(minTokens).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
+                statusDiv.textContent = `Successfully swapped ${bchAmount} BCH for at least ${minTokens} Xolos $RMZ tokens.`;
             } catch (error) {
                 statusDiv.textContent = `Error: ${error.message}`;
-                console.error('Exchange error:', error);
+                console.error('Swap error:', error);
             }
         }
 
@@ -159,26 +171,11 @@
             const listItem = document.createElement('li');
             const link = document.createElement('a');
             link.href = explorerBaseUrl + txHash;
-            link.textContent = `Exchanged ${amount} BCH for Xolos $RMZ - View on Explorer`;
+            link.textContent = `Transaction of ${amount} BCH - View on Explorer`;
             link.target = '_blank';
             listItem.appendChild(link);
             transactionsList.appendChild(listItem);
         }
-
-        // Function to validate BCH address
-        function validateBCHAddress(address) {
-            // This is a simplified check. For production, use a more robust validation method.
-            return web3.utils.isAddress(address);
-        }
-
-        // Add event listener to validate address on input
-        document.getElementById('xolosAddress').addEventListener('input', function(e) {
-            if (validateBCHAddress(e.target.value)) {
-                e.target.style.borderColor = 'green';
-            } else {
-                e.target.style.borderColor = 'red';
-            }
-        });
     </script>
 </body>
 </html>
