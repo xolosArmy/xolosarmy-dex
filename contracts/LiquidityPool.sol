@@ -38,14 +38,20 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
     function removeLiquidity(uint256 amount) external nonReentrant returns (uint256, uint256) {
         require(liquidity[msg.sender] >= amount, "Insufficient liquidity");
 
-        uint256 tokenAmount = (amount * token.balanceOf(address(this))) / address(this).balance;
-        
+        uint256 bchReserve = address(this).balance;
+        uint256 tokenReserve = token.balanceOf(address(this));
+
+        // Calculate token amount to return
+        uint256 tokenAmount = (amount * tokenReserve) / bchReserve;
+
         liquidity[msg.sender] -= amount;
         totalLiquidity -= amount;
 
+        // Transfer BCH to sender
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "BCH transfer failed");
 
+        // Transfer tokens to sender
         require(token.transfer(msg.sender, tokenAmount), "Token transfer failed");
 
         emit LiquidityRemoved(msg.sender, amount, tokenAmount);
@@ -60,7 +66,7 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
         uint256 bchReserve = address(this).balance - bchAmount;
         require(bchReserve > 0 && tokenReserve > 0, "Insufficient liquidity");
 
-        uint256 tokenAmount = (bchAmount * tokenReserve * PRECISION) / ((bchReserve * PRECISION) + (bchAmount * PRECISION));
+        uint256 tokenAmount = getAmountOut(bchAmount, bchReserve, tokenReserve);
         require(tokenAmount >= minTokens, "Insufficient output amount");
 
         require(token.transfer(msg.sender, tokenAmount), "Token transfer failed");
@@ -73,7 +79,7 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
 
         uint256 bchReserve = address(this).balance;
         uint256 tokenReserve = token.balanceOf(address(this));
-        uint256 bchAmount = (tokenAmount * bchReserve * PRECISION) / ((tokenReserve * PRECISION) + (tokenAmount * PRECISION));
+        uint256 bchAmount = getAmountOut(tokenAmount, tokenReserve, bchReserve);
 
         require(bchAmount >= minBCH, "Insufficient output amount");
         require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
@@ -82,5 +88,11 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
         require(success, "BCH transfer failed");
 
         emit Swapped(msg.sender, tokenAmount, bchAmount, false);
+    }
+
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256) {
+        require(amountIn > 0, "Insufficient input amount");
+        require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
+        return (amountIn * reserveOut) / (reserveIn + amountIn);
     }
 }
