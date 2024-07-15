@@ -46,15 +46,24 @@ contract LiquidityPool {
     }
 
     function swapBCHForToken(uint256 minTokens) public payable {
-        require(msg.value > 0, "Insufficient BCH sent");
+    require(msg.value > 0, "BCH amount must be greater than zero");
 
-        uint256 tokenAmount = (msg.value * IERC20(token).balanceOf(address(this))) / address(this).balance;
-        require(tokenAmount >= minTokens, "Insufficient output amount");
+    uint256 tokenAmount = getEquivalentTokenAmount(msg.value);
+    require(tokenAmount >= minTokens, "Insufficient output amount");
 
-        require(IERC20(token).transfer(msg.sender, tokenAmount), "Token transfer failed");
+    // Transfer tokens from contract to sender
+    IERC20(token).transfer(msg.sender, tokenAmount);
 
-        emit Swapped(msg.sender, msg.value, tokenAmount);
-    }
+    emit Swapped(msg.sender, msg.value, tokenAmount);
+}
+
+function getEquivalentTokenAmount(uint256 bchAmount) internal view returns (uint256) {
+    uint256 tokenReserve = IERC20(token).balanceOf(address(this));
+    uint256 bchReserve = address(this).balance;
+    // Use a simple formula for conversion, e.g., constant product formula
+    return (bchAmount * tokenReserve) / bchReserve;
+}
+
 
     function swapTokenForBCH(uint256 tokenAmount, uint256 minBCH) public {
         require(tokenAmount > 0, "Insufficient token amount");
