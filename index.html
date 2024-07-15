@@ -193,7 +193,245 @@
         </main>
     </div>
     <script>
-        // ... (keep the existing JavaScript code) ...
+        const tokenAddress = '0x49F9ECF126B6dDF51C731614755508A4674bA7eD';
+const liquidityPoolAddress = '0xAd90E94ee8489A563F8FD41c75F56d1b97556414';
+const explorerBaseUrl = 'https://smartscout.cash/tx/';
+let wallet = null;
+let web3;
+let liquidityPoolContract;
+
+const liquidityPoolABI = [
+    {
+        "inputs": [{"internalType": "address", "name": "_token", "type": "address"}],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": true, "internalType": "address", "name": "provider", "type": "address"},
+            {"indexed": false, "internalType": "uint256", "name": "amountBCH", "type": "uint256"},
+            {"indexed": false, "internalType": "uint256", "name": "amountToken", "type": "uint256"}
+        ],
+        "name": "LiquidityAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": true, "internalType": "address", "name": "provider", "type": "address"},
+            {"indexed": false, "internalType": "uint256", "name": "amountBCH", "type": "uint256"},
+            {"indexed": false, "internalType": "uint256", "name": "amountToken", "type": "uint256"}
+        ],
+        "name": "LiquidityRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {"indexed": true, "internalType": "address", "name": "swapper", "type": "address"},
+            {"indexed": false, "internalType": "uint256", "name": "amountIn", "type": "uint256"},
+            {"indexed": false, "internalType": "uint256", "name": "amountOut", "type": "uint256"}
+        ],
+        "name": "Swapped",
+        "type": "event"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "tokenAmount", "type": "uint256"}],
+        "name": "addLiquidity",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "name": "liquidity",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+        "name": "removeLiquidity",
+        "outputs": [
+            {"internalType": "uint256", "name": "", "type": "uint256"},
+            {"internalType": "uint256", "name": "", "type": "uint256"}
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint256", "name": "minTokens", "type": "uint256"}],
+        "name": "swapBCHForToken",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "tokenAmount", "type": "uint256"},
+            {"internalType": "uint256", "name": "minBCH", "type": "uint256"}
+        ],
+        "name": "swapTokenForBCH",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "token",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalLiquidity",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    }
+];
+
+async function connectWallet() {
+    const statusDiv = document.getElementById('status');
+    try {
+        if (typeof window.ethereum !== 'undefined') {
+            web3 = new Web3(window.ethereum);
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            if (accounts.length === 0) {
+                throw new Error('No accounts found. Please create an account in your wallet.');
+            }
+            wallet = accounts[0];
+            document.getElementById('walletAddress').textContent = wallet;
+
+            // Initialize the LiquidityPool contract
+            liquidityPoolContract = new web3.eth.Contract(liquidityPoolABI, liquidityPoolAddress);
+
+            // Fetch balance
+            const balance = await web3.eth.getBalance(wallet);
+            const balanceInBCH = web3.utils.fromWei(balance, 'ether'); // Convert wei to BCH
+            document.getElementById('walletBalance').textContent = balanceInBCH;
+
+            statusDiv.textContent = 'Wallet connected successfully!';
+        } else {
+            throw new Error('MetaMask wallet not detected. Please install MetaMask.');
+        }
+    } catch (error) {
+        statusDiv.textContent = `Error connecting wallet: ${error.message}`;
+        console.error('Wallet connection error:', error);
+    }
+}
+
+async function exchange() {
+    const statusDiv = document.getElementById('status');
+    if (!wallet) {
+        statusDiv.textContent = 'Please connect your wallet first.';
+        return;
+    }
+
+    const bchAmount = document.getElementById('bchAmount').value;
+    const xolosAddress = document.getElementById('xolosAddress').value;
+
+    if (!bchAmount || !xolosAddress) {
+        statusDiv.textContent = 'Please enter both BCH amount and Xolos $RMZ address.';
+        return;
+    }
+
+    statusDiv.textContent = `Processing exchange of ${bchAmount} BCH for Xolos $RMZ tokens...`;
+
+    try {
+        if (typeof window.ethereum === 'undefined') {
+            throw new Error('MetaMask wallet not detected. Please install MetaMask.');
+        }
+
+        // Create a simple send transaction
+        const txParams = {
+            from: wallet,
+            to: xolosAddress,
+            value: web3.utils.toWei(bchAmount, 'ether'), // Convert BCH to wei
+            data: web3.utils.toHex(tokenAddress) // Include token address in the data field
+        };
+
+        const txHash = await ethereum.request({ 
+            method: 'eth_sendTransaction', 
+            params: [txParams]
+        });
+
+        statusDiv.textContent = `Exchange initiated! ${bchAmount} BCH exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
+
+        addTransactionToHistory(txHash, bchAmount);
+    } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        console.error('Exchange error:', error);
+    }
+}
+
+async function addLiquidity() {
+    const statusDiv = document.getElementById('liquidityStatus');
+    if (!wallet) {
+        statusDiv.textContent = 'Please connect your wallet first.';
+        return;
+    }
+
+    const bchAmount = document.getElementById('liquidityBchAmount').value;
+    const rmzAmount = document.getElementById('liquidityRmzAmount').value;
+
+    if (!bchAmount || !rmzAmount) {
+        statusDiv.textContent = 'Please enter both BCH amount and Xolos $RMZ amount.';
+        return;
+    }
+
+    statusDiv.textContent = `Adding liquidity: ${bchAmount} BCH and ${rmzAmount} Xolos $RMZ...`;
+
+    try {
+        const txHash = await liquidityPoolContract.methods.addLiquidity(web3.utils.toWei(rmzAmount, 'ether')).send({
+            from: wallet,
+            value: web3.utils.toWei(bchAmount, 'ether')
+        });
+
+        statusDiv.textContent = `Liquidity added! ${bchAmount} BCH and ${rmzAmount} Xolos $RMZ. Transaction hash: ${txHash}`;
+
+        addTransactionToHistory(txHash.transactionHash, `Liquidity: ${bchAmount} BCH and ${rmzAmount} Xolos $RMZ`);
+    } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        console.error('Liquidity error:', error);
+    }
+}
+
+function addTransactionToHistory(txHash, amount) {
+    const transactionsList = document.getElementById('transactions');
+    const listItem = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = explorerBaseUrl + txHash;
+    link.textContent = `Transaction - ${amount} - View on Explorer`;
+    link.target = '_blank';
+    listItem.appendChild(link);
+    transactionsList.appendChild(listItem);
+}
+
+// Function to validate BCH address
+function validateBCHAddress(address) {
+    // This is a simplified check. For production, use a more robust validation method.
+    return web3.utils.isAddress(address);
+}
+
+// Add event listener to validate address on input
+document.getElementById('xolosAddress').addEventListener('input', function(e) {
+    if (validateBCHAddress(e.target.value)) {
+        e.target.style.borderColor = 'green';
+    } else {
+        e.target.style.borderColor = 'red';
+    }
+});
+
     </script>
 </body>
 </html>
