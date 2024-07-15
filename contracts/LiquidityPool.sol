@@ -45,23 +45,38 @@ contract LiquidityPool {
         return (amount, tokenAmount);
     }
 
-    function swapBCHForToken(uint256 minTokens) public payable {
-    require(msg.value > 0, "BCH amount must be greater than zero");
+    // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-    uint256 tokenAmount = getEquivalentTokenAmount(msg.value);
-    require(tokenAmount >= minTokens, "Insufficient output amount");
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-    // Transfer tokens from contract to sender
-    IERC20(token).transfer(msg.sender, tokenAmount);
+contract OptimizedSwap {
+    IERC20 public immutable token;
+    uint256 private constant PRECISION = 1e18;
 
-    emit Swapped(msg.sender, msg.value, tokenAmount);
-}
+    event Swapped(address indexed user, uint256 bchAmount, uint256 tokenAmount);
 
-function getEquivalentTokenAmount(uint256 bchAmount) internal view returns (uint256) {
-    uint256 tokenReserve = IERC20(token).balanceOf(address(this));
-    uint256 bchReserve = address(this).balance;
-    // Use a simple formula for conversion, e.g., constant product formula
-    return (bchAmount * tokenReserve) / bchReserve;
+    constructor(address _token) {
+        token = IERC20(_token);
+    }
+
+    function swapBCHForToken(uint256 minTokens) external payable {
+        uint256 bchAmount = msg.value;
+        require(bchAmount > 0, "BCH amount must be greater than zero");
+
+        uint256 tokenReserve = token.balanceOf(address(this));
+        uint256 bchReserve = address(this).balance - bchAmount;
+
+        require(bchReserve > 0 && tokenReserve > 0, "Insufficient liquidity");
+
+        uint256 tokenAmount = (bchAmount * tokenReserve * PRECISION) / ((bchReserve * PRECISION) + (bchAmount * PRECISION));
+
+        require(tokenAmount >= minTokens, "Insufficient output amount");
+
+        token.transfer(msg.sender, tokenAmount);
+
+        emit Swapped(msg.sender, bchAmount, tokenAmount);
+    }
 }
 
 
