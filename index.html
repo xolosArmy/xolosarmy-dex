@@ -229,48 +229,51 @@
         }
 
         async function exchange() {
-            const statusDiv = document.getElementById('status');
-            if (!wallet) {
-                statusDiv.textContent = 'Please connect your wallet first.';
-                return;
-            }
+    const statusDiv = document.getElementById('status');
+    if (!wallet) {
+        statusDiv.textContent = 'Please connect your wallet first.';
+        return;
+    }
 
-            const bchAmount = document.getElementById('bchAmount').value;
-            const xolosAddress = document.getElementById('xolosAddress').value;
+    const bchAmount = document.getElementById('bchAmount').value;
+    const xolosAddress = document.getElementById('xolosAddress').value;
 
-            if (!bchAmount || !xolosAddress) {
-                statusDiv.textContent = 'Please enter both BCH amount and Xolos $RMZ address.';
-                return;
-            }
+    if (!bchAmount || !xolosAddress) {
+        statusDiv.textContent = 'Please enter both BCH amount and Xolos $RMZ address.';
+        return;
+    }
 
-            statusDiv.textContent = `Processing exchange of ${bchAmount} BCH for Xolos $RMZ tokens...`;
+    statusDiv.textContent = `Processing exchange of ${bchAmount} BCH for Xolos $RMZ tokens...`;
 
-            try {
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('MetaMask wallet not detected. Please install MetaMask.');
-                }
-
-                // Create a simple send transaction
-                const txParams = {
-                    from: wallet,
-                    to: xolosAddress,
-                    value: web3.utils.toWei(bchAmount, 'ether'), // Convert BCH to wei
-                    data: web3.utils.toHex(tokenAddress) // Include token address in the data field
-                };
-
-                const txHash = await ethereum.request({ 
-                    method: 'eth_sendTransaction', 
-                    params: [txParams]
-                });
-
-                statusDiv.textContent = `Exchange initiated! ${bchAmount} BCH exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
-
-                addTransactionToHistory(txHash, bchAmount);
-            } catch (error) {
-                statusDiv.textContent = `Error: ${error.message}`;
-                console.error('Exchange error:', error);
-            }
+    try {
+        if (typeof window.ethereum === 'undefined') {
+            throw new Error('MetaMask wallet not detected. Please install MetaMask.');
         }
+
+        // Estimate gas and set custom gas price
+        const gasPrice = await web3.eth.getGasPrice();
+        const txParams = {
+            from: wallet,
+            to: xolosAddress,
+            value: web3.utils.toWei(bchAmount, 'ether'), // Convert BCH to wei
+            data: web3.utils.toHex(tokenAddress), // Include token address in the data field
+            gasPrice: web3.utils.toHex(Math.floor(gasPrice * 1.1)), // Set gas price slightly above the current average
+        };
+
+        const txHash = await ethereum.request({ 
+            method: 'eth_sendTransaction', 
+            params: [txParams]
+        });
+
+        statusDiv.textContent = `Exchange initiated! ${bchAmount} BCH exchanged for Xolos $RMZ tokens. Transaction hash: ${txHash}`;
+
+        addTransactionToHistory(txHash, bchAmount);
+    } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        console.error('Exchange error:', error);
+    }
+}
+
 
         async function addLiquidity() {
             const statusDiv = document.getElementById('liquidityStatus');
