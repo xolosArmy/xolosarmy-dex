@@ -1,4 +1,4 @@
-const contractAddress = "0x17e30f9927Ace6D70fA5EB3F172C28Dc76Fd7B92";
+const contractAddress = "0x948134045c356Ba9C72E8cB4C9f4aA93d68506C7";
 const contractABI = [
 	{
 		"inputs": [
@@ -137,6 +137,12 @@ const contractABI = [
 				"internalType": "uint256",
 				"name": "amountOut",
 				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isBCHToToken",
+				"type": "bool"
 			}
 		],
 		"name": "Swapped",
@@ -197,7 +203,7 @@ const contractABI = [
 		"name": "token",
 		"outputs": [
 			{
-				"internalType": "address",
+				"internalType": "contract IERC20",
 				"name": "",
 				"type": "address"
 			}
