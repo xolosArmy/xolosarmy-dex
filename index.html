@@ -3,80 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xolos Army DEX</title>
+    <title>xolosArmy Network State DEX</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f8f8;
-            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            line-height: 1.6;
+            color: #fff;
             margin: 0;
             padding: 0;
+            background-color: #000;
+            background-image: 
+                linear-gradient(to bottom, rgba(255,0,0,0.2) 0%, rgba(0,0,0,0.2) 100%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23000'/%3E%3Cstop offset='1' stop-color='%23600'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpattern id='b' width='24' height='24' patternUnits='userSpaceOnUse'%3E%3Ccircle fill='%23fff' cx='12' cy='12' r='1'/%3E%3C/pattern%3E%3Crect width='100%25' height='100%25' fill='url(%23a)'/%3E%3Crect width='100%25' height='100%25' fill='url(%23b)' fill-opacity='0.1'/%3E%3C/svg%3E");
+            background-attachment: fixed;
+            background-size: cover;
         }
 
         .container {
-            max-width: 800px;
-            margin: 50px auto;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         header {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
             text-align: center;
-            margin-bottom: 40px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        header h1 {
-            margin: 0;
-            color: #ff3333;
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            right: -50%;
+            bottom: -50%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cpath d='M100 0 L200 200 L0 200 Z' fill='rgba(255,0,0,0.1)'/%3E%3C/svg%3E") repeat;
+            animation: thunderbolt 10s linear infinite;
+            z-index: -1;
         }
 
-        header p {
-            color: #666;
+        @keyframes thunderbolt {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(50%) rotate(360deg); }
         }
 
-        h2 {
-            color: #ff3333;
-            border-bottom: 2px solid #ff3333;
-            padding-bottom: 10px;
-            margin-top: 30px;
+        h1 {
+            margin-bottom: 0;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.7);
+        }
+
+        main {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            margin-top: 20px;
         }
 
         .exchange-form, .liquidity-form {
             display: flex;
             flex-direction: column;
             gap: 10px;
+            margin-bottom: 20px;
         }
 
-        input[type="number"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        input, button {
+            padding: 15px;
             font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
         }
 
         button {
-            padding: 10px 15px;
-            border: none;
-            background-color: #ff3333;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 5px;
+            background-color: #ff0000;
+            color: white;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.1s;
+            text-transform: uppercase;
+            font-weight: bold;
         }
 
         button:hover {
-            background-color: #ff6666;
+            background-color: #ff3333;
+            transform: translateY(-2px);
         }
 
-        #status, #liquidityStatus {
+        button:active {
+            transform: translateY(1px);
+        }
+
+        #status, #transactionHistory, #walletInfo, #liquidityStatus {
             margin-top: 20px;
-            padding: 10px;
-            background-color: #ffcccc;
-            color: #ff3333;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
-            display: none;
+        }
+
+        #transactionHistory, #walletInfo {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 20px;
         }
 
         #transactions {
@@ -97,13 +137,20 @@
         #transactions a:hover {
             color: #ff9999;
         }
+
+        h2 {
+            color: #ff3333;
+            border-bottom: 2px solid #ff3333;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Xolos Army DEX</h1>
+            <h1>xolosArmy Network State DEX</h1>
             <p>A decentralized exchange for Xolos $RMZ Token</p>
         </header>
         <main>
@@ -130,6 +177,7 @@
                 <h2>Transaction History</h2>
                 <ul id="transactions"></ul>
             </div>
+
             <h2>Add Liquidity</h2>
             <div class="liquidity-form">
                 <input type="number" id="liquidityBchAmount" placeholder="BCH amount">
@@ -145,138 +193,7 @@
         </main>
     </div>
     <script>
-        const tokenAddress = '0x49F9ECF126B6dDF51C731614755508A4674bA7eD';
-        const liquidityPoolAddress = '0x948134045c356Ba9C72E8cB4C9f4aA93d68506C7';
-        const explorerBaseUrl = 'https://smartscout.cash/tx/';
-        let wallet = null;
-        let web3;
-        let liquidityPoolContract;
-
-        const liquidityPoolABI = [
-            // ... (the provided ABI)
-        ];
-
-        function connectWallet() {
-            if (window.ethereum) {
-                web3 = new Web3(window.ethereum);
-                window.ethereum.enable().then(function(accounts) {
-                    wallet = accounts[0];
-                    document.getElementById('walletAddress').textContent = wallet;
-                    updateBalance();
-                    loadLiquidityPoolContract();
-                });
-            } else {
-                alert('Please install MetaMask to use this feature.');
-            }
-        }
-
-        async function loadLiquidityPoolContract() {
-            liquidityPoolContract = new web3.eth.Contract(liquidityPoolABI, liquidityPoolAddress);
-        }
-
-        async function updateBalance() {
-            const balance = await web3.eth.getBalance(wallet);
-            document.getElementById('walletBalance').textContent = web3.utils.fromWei(balance, 'ether');
-        }
-
-        async function swapBCHForToken() {
-            const bchAmount = document.getElementById('bchAmount').value;
-            const minTokens = document.getElementById('minTokens').value;
-            const bchAmountInWei = web3.utils.toWei(bchAmount, 'ether');
-            const minTokensInWei = web3.utils.toWei(minTokens, 'ether');
-
-            const swapMethod = liquidityPoolContract.methods.swapBCHForToken(minTokensInWei);
-            const statusElem = document.getElementById('status');
-
-            try {
-                const receipt = await swapMethod.send({
-                    from: wallet,
-                    value: bchAmountInWei
-                });
-                statusElem.textContent = `Swap successful! Transaction hash: ${receipt.transactionHash}`;
-                statusElem.style.display = 'block';
-                updateTransactionHistory(receipt.transactionHash);
-            } catch (error) {
-                statusElem.textContent = `Error: ${error.message}`;
-                statusElem.style.display = 'block';
-            }
-        }
-
-        async function swapTokenForBCH() {
-            const tokenAmount = document.getElementById('tokenAmount').value;
-            const minBCH = document.getElementById('minBCH').value;
-            const tokenAmountInWei = web3.utils.toWei(tokenAmount, 'ether');
-            const minBCHInWei = web3.utils.toWei(minBCH, 'ether');
-
-            const swapMethod = liquidityPoolContract.methods.swapTokenForBCH(tokenAmountInWei, minBCHInWei);
-            const statusElem = document.getElementById('status');
-
-            try {
-                const receipt = await swapMethod.send({
-                    from: wallet
-                });
-                statusElem.textContent = `Swap successful! Transaction hash: ${receipt.transactionHash}`;
-                statusElem.style.display = 'block';
-                updateTransactionHistory(receipt.transactionHash);
-            } catch (error) {
-                statusElem.textContent = `Error: ${error.message}`;
-                statusElem.style.display = 'block';
-            }
-        }
-
-        async function addLiquidity() {
-            const bchAmount = document.getElementById('liquidityBchAmount').value;
-            const rmzAmount = document.getElementById('liquidityRmzAmount').value;
-            const bchAmountInWei = web3.utils.toWei(bchAmount, 'ether');
-            const rmzAmountInWei = web3.utils.toWei(rmzAmount, 'ether');
-
-            const addLiquidityMethod = liquidityPoolContract.methods.addLiquidity(rmzAmountInWei);
-            const statusElem = document.getElementById('liquidityStatus');
-
-            try {
-                const receipt = await addLiquidityMethod.send({
-                    from: wallet,
-                    value: bchAmountInWei
-                });
-                statusElem.textContent = `Liquidity added! Transaction hash: ${receipt.transactionHash}`;
-                statusElem.style.display = 'block';
-                updateTransactionHistory(receipt.transactionHash);
-            } catch (error) {
-                statusElem.textContent = `Error: ${error.message}`;
-                statusElem.style.display = 'block';
-            }
-        }
-
-        async function removeLiquidity() {
-            const liquidityAmount = document.getElementById('removeLiquidityAmount').value;
-            const liquidityAmountInWei = web3.utils.toWei(liquidityAmount, 'ether');
-
-            const removeLiquidityMethod = liquidityPoolContract.methods.removeLiquidity(liquidityAmountInWei);
-            const statusElem = document.getElementById('liquidityStatus');
-
-            try {
-                const receipt = await removeLiquidityMethod.send({
-                    from: wallet
-                });
-                statusElem.textContent = `Liquidity removed! Transaction hash: ${receipt.transactionHash}`;
-                statusElem.style.display = 'block';
-                updateTransactionHistory(receipt.transactionHash);
-            } catch (error) {
-                statusElem.textContent = `Error: ${error.message}`;
-                statusElem.style.display = 'block';
-            }
-        }
-
-        async function updateTransactionHistory(transactionHash) {
-            const transactionList = document.getElementById('transactions');
-            const listItem = document.createElement('li');
-            const link = document.createElement('a');
-            link.href = `${explorerBaseUrl}${transactionHash}`;
-            link.textContent = transactionHash;
-            link.target = '_blank';
-            listItem.appendChild(link);
-            transactionList.appendChild(listItem);
-        }
+        // ... (keep the existing JavaScript code) ...
     </script>
 </body>
 </html>
