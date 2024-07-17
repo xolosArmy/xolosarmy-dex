@@ -4,14 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract OptimizedLiquidityPool is ReentrancyGuard {
+contract LiquidityPoolWithAMM is ReentrancyGuard {
     IERC20 public immutable token;
     address public immutable owner;
     uint256 public totalLiquidity;
 
     mapping(address => uint256) public liquidity;
-
-    uint256 private constant PRECISION = 1e18;
 
     event LiquidityAdded(address indexed provider, uint256 amountBCH, uint256 amountToken);
     event LiquidityRemoved(address indexed provider, uint256 amountBCH, uint256 amountToken);
@@ -38,20 +36,14 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
     function removeLiquidity(uint256 amount) external nonReentrant returns (uint256, uint256) {
         require(liquidity[msg.sender] >= amount, "Insufficient liquidity");
 
-        uint256 bchReserve = address(this).balance;
-        uint256 tokenReserve = token.balanceOf(address(this));
-
-        // Calculate token amount to return
-        uint256 tokenAmount = (amount * tokenReserve) / bchReserve;
-
+        uint256 tokenAmount = (amount * token.balanceOf(address(this))) / address(this).balance;
+        
         liquidity[msg.sender] -= amount;
         totalLiquidity -= amount;
 
-        // Transfer BCH to sender
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "BCH transfer failed");
 
-        // Transfer tokens to sender
         require(token.transfer(msg.sender, tokenAmount), "Token transfer failed");
 
         emit LiquidityRemoved(msg.sender, amount, tokenAmount);
@@ -91,8 +83,9 @@ contract OptimizedLiquidityPool is ReentrancyGuard {
     }
 
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256) {
-        require(amountIn > 0, "Insufficient input amount");
-        require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
-        return (amountIn * reserveOut) / (reserveIn + amountIn);
+        uint256 amountInWithFee = amountIn * 997; // Apply a fee, e.g., 0.3%
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        return numerator / denominator;
     }
 }
