@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-     <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>xolosArmy Network State DEX</title>
+    <title>Xolos Army Network State DEX</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -146,52 +146,7 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Xolos Army DEX</h1>
-            <p>A decentralized exchange for Xolos $RMZ Token</p>
-        </header>
-        <main>
-            <div id="walletInfo">
-                <h2>Wallet Information</h2>
-                <p>Address: <span id="walletAddress">Not connected</span></p>
-                <p>Balance: <span id="walletBalance">0</span> BCH</p>
-                <button onclick="connectWallet()">Connect Wallet</button>
-            </div>
-            <h2>Exchange BCH for Xolos $RMZ</h2>
-            <div class="exchange-form">
-                <input type="number" id="bchAmount" placeholder="BCH amount">
-                <input type="number" id="minTokens" placeholder="Minimum tokens to receive">
-                <button onclick="swapBCHForToken()">Exchange</button>
-            </div>
-            <h2>Exchange Xolos $RMZ for BCH</h2>
-            <div class="exchange-form">
-                <input type="number" id="tokenAmount" placeholder="Xolos $RMZ amount">
-                <input type="number" id="minBCH" placeholder="Minimum BCH to receive">
-                <button onclick="swapTokenForBCH()">Exchange</button>
-            </div>
-            <div id="status"></div>
-            <div id="transactionHistory">
-                <h2>Transaction History</h2>
-                <ul id="transactions"></ul>
-            </div>
-
-            <h2>Add Liquidity</h2>
-            <div class="liquidity-form">
-                <input type="number" id="liquidityBchAmount" placeholder="BCH amount">
-                <input type="number" id="liquidityRmzAmount" placeholder="Xolos $RMZ amount">
-                <button onclick="addLiquidity()">Add Liquidity</button>
-            </div>
-            <h2>Remove Liquidity</h2>
-            <div class="liquidity-form">
-                <input type="number" id="removeLiquidityAmount" placeholder="Liquidity amount to remove">
-                <button onclick="removeLiquidity()">Remove Liquidity</button>
-            </div>
-            <div id="liquidityStatus"></div>
-        </main>
-    </div>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
     <script>
         const tokenAddress = '0x49F9ECF126B6dDF51C731614755508A4674bA7eD';
         const liquidityPoolAddress = '0x948134045c356Ba9C72E8cB4C9f4aA93d68506C7';
@@ -201,231 +156,8 @@
         let liquidityPoolContract;
 
         const liquidityPoolABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "addLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_token",
-				"type": "address"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "provider",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountBCH",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountToken",
-				"type": "uint256"
-			}
-		],
-		"name": "LiquidityAdded",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "provider",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountBCH",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountToken",
-				"type": "uint256"
-			}
-		],
-		"name": "LiquidityRemoved",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "removeLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "minTokens",
-				"type": "uint256"
-			}
-		],
-		"name": "swapBCHForToken",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "swapper",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountIn",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountOut",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isBCHToToken",
-				"type": "bool"
-			}
-		],
-		"name": "Swapped",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenAmount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "minBCH",
-				"type": "uint256"
-			}
-		],
-		"name": "swapTokenForBCH",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "liquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "token",
-		"outputs": [
-			{
-				"internalType": "contract IERC20",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "totalLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-];
+            // ABI code here
+        ];
 
         async function connectWallet() {
             if (window.ethereum) {
@@ -479,40 +211,90 @@
         }
 
         async function addLiquidity() {
-            const bchAmount = document.getElementById('liquidityBchAmount').value;
-            const rmzAmount = document.getElementById('liquidityRmzAmount').value;
+            const bchAmount = document.getElementById('bchLiquidity').value;
+            const tokenAmount = document.getElementById('tokenLiquidity').value;
             const contract = new web3.eth.Contract(liquidityPoolABI, liquidityPoolAddress);
 
             try {
-                await contract.methods.addLiquidity(rmzAmount).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
-                document.getElementById('liquidityStatus').innerText = 'Liquidity added!';
+                await contract.methods.addLiquidity(tokenAmount).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
+                document.getElementById('status').innerText = 'Liquidity added!';
                 addTransaction('Add Liquidity');
             } catch (error) {
                 console.error("Add liquidity failed", error);
-                document.getElementById('liquidityStatus').innerText = 'Add liquidity failed!';
+                document.getElementById('status').innerText = 'Add liquidity failed!';
             }
         }
 
         async function removeLiquidity() {
-            const liquidityAmount = document.getElementById('removeLiquidityAmount').value;
+            const lpTokens = document.getElementById('lpTokens').value;
             const contract = new web3.eth.Contract(liquidityPoolABI, liquidityPoolAddress);
 
             try {
-                await contract.methods.removeLiquidity(liquidityAmount).send({ from: wallet });
-                document.getElementById('liquidityStatus').innerText = 'Liquidity removed!';
+                await contract.methods.removeLiquidity(lpTokens).send({ from: wallet });
+                document.getElementById('status').innerText = 'Liquidity removed!';
                 addTransaction('Remove Liquidity');
             } catch (error) {
                 console.error("Remove liquidity failed", error);
-                document.getElementById('liquidityStatus').innerText = 'Remove liquidity failed!';
+                document.getElementById('status').innerText = 'Remove liquidity failed!';
             }
         }
 
         function addTransaction(type) {
-            const transactionsList = document.getElementById('transactions');
-            const newTransaction = document.createElement('li');
-            newTransaction.innerHTML = `<a href="${explorerBaseUrl}" target="_blank">${type}</a>`;
-            transactionsList.appendChild(newTransaction);
+            const txList = document.getElementById('transactions');
+            const newTx = document.createElement('li');
+            newTx.innerText = `${type} - ${new Date().toLocaleString()}`;
+            txList.appendChild(newTx);
+        }
+
+        window.onload = function() {
+            document.getElementById('connectButton').addEventListener('click', connectWallet);
+            document.getElementById('swapBCHForToken').addEventListener('click', swapBCHForToken);
+            document.getElementById('swapTokenForBCH').addEventListener('click', swapTokenForBCH);
+            document.getElementById('addLiquidity').addEventListener('click', addLiquidity);
+            document.getElementById('removeLiquidity').addEventListener('click', removeLiquidity);
         }
     </script>
+</head>
+<body>
+    <header>
+        <h1>Xolos Army Network State DEX</h1>
+    </header>
+    <div class="container">
+        <main>
+            <button id="connectButton">Connect Wallet</button>
+            <div id="walletInfo">
+                <p>Wallet Address: <span id="walletAddress">Not connected</span></p>
+                <p>Wallet Balance: <span id="walletBalance">0</span> BCH</p>
+            </div>
+            <h2>Swap BCH for RMZ</h2>
+            <div class="exchange-form">
+                <input type="number" id="bchAmount" placeholder="BCH Amount">
+                <input type="number" id="minTokens" placeholder="Minimum RMZ to receive">
+                <button id="swapBCHForToken">Swap BCH for RMZ</button>
+            </div>
+            <h2>Swap RMZ for BCH</h2>
+            <div class="exchange-form">
+                <input type="number" id="tokenAmount" placeholder="RMZ Amount">
+                <input type="number" id="minBCH" placeholder="Minimum BCH to receive">
+                <button id="swapTokenForBCH">Swap RMZ for BCH</button>
+            </div>
+            <h2>Add Liquidity</h2>
+            <div class="liquidity-form">
+                <input type="number" id="bchLiquidity" placeholder="BCH Amount">
+                <input type="number" id="tokenLiquidity" placeholder="RMZ Amount">
+                <button id="addLiquidity">Add Liquidity</button>
+            </div>
+            <h2>Remove Liquidity</h2>
+            <div class="liquidity-form">
+                <input type="number" id="lpTokens" placeholder="LP Tokens">
+                <button id="removeLiquidity">Remove Liquidity</button>
+            </div>
+            <div id="status"></div>
+            <h2>Transaction History</h2>
+            <div id="transactionHistory">
+                <ul id="transactions"></ul>
+            </div>
+        </main>
+    </div>
 </body>
 </html>
