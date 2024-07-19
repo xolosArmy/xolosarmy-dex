@@ -1,301 +1,219 @@
 const contractAddress = "0x948134045c356Ba9C72E8cB4C9f4aA93d68506C7";
 const contractABI = [
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "addLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_token",
-				"type": "address"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "provider",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountBCH",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountToken",
-				"type": "uint256"
-			}
-		],
-		"name": "LiquidityAdded",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "provider",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountBCH",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountToken",
-				"type": "uint256"
-			}
-		],
-		"name": "LiquidityRemoved",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "removeLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "minTokens",
-				"type": "uint256"
-			}
-		],
-		"name": "swapBCHForToken",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "swapper",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountIn",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amountOut",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isBCHToToken",
-				"type": "bool"
-			}
-		],
-		"name": "Swapped",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenAmount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "minBCH",
-				"type": "uint256"
-			}
-		],
-		"name": "swapTokenForBCH",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "liquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "token",
-		"outputs": [
-			{
-				"internalType": "contract IERC20",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "totalLiquidity",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_token",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "provider",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountBCH",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountToken",
+                "type": "uint256"
+            }
+        ],
+        "name": "LiquidityAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "provider",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountBCH",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountToken",
+                "type": "uint256"
+            }
+        ],
+        "name": "LiquidityRemoved",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "swapper",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountBCH",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountToken",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "isBCHToToken",
+                "type": "bool"
+            }
+        ],
+        "name": "Swapped",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "addLiquidity",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "amountBCH",
+                "type": "uint256"
+            }
+        ],
+        "name": "removeLiquidity",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "swapBCHForToken",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "tokenAmount",
+                "type": "uint256"
+            }
+        ],
+        "name": "swapTokenForBCH",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "newPrice",
+                "type": "uint256"
+            }
+        ],
+        "name": "updateTokenPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
 ];
 
-let web3;
-let contract;
-let accounts;
-let wallet;
+async function addLiquidity(bchAmount, tokenAmount) {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-async function connectWallet() {
-    const statusDiv = document.getElementById('status');
-    try {
-        if (typeof window.ethereum !== 'undefined') {
-            web3 = new Web3(window.ethereum);
-            accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-            if (accounts.length === 0) {
-                throw new Error('No accounts found. Please create an account in your wallet.');
-            }
-            wallet = accounts[0];
-            contract = new web3.eth.Contract(contractABI, contractAddress);
-            document.getElementById('walletAddress').textContent = wallet;
+    const tx = await contract.addLiquidity(tokenAmount, { value: ethers.utils.parseUnits(bchAmount, 'ether') });
+    await tx.wait();
 
-            const balance = await web3.eth.getBalance(wallet);
-            const balanceInBCH = web3.utils.fromWei(balance, 'ether');
-            document.getElementById('walletBalance').textContent = balanceInBCH;
-
-            statusDiv.textContent = 'Wallet connected successfully!';
-        } else {
-            throw new Error('MetaMask wallet not detected. Please install MetaMask.');
-        }
-    } catch (error) {
-        statusDiv.textContent = `Error connecting wallet: ${error.message}`;
-        console.error('Wallet connection error:', error);
-    }
+    console.log('Liquidity added:', tx);
 }
 
-async function addLiquidity() {
-    const statusDiv = document.getElementById('status');
-    if (!wallet) {
-        statusDiv.textContent = 'Please connect your wallet first.';
-        return;
-    }
+async function removeLiquidity(amountBCH) {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    const bchAmount = document.getElementById('bchAmount').value;
-    const tokenAmount = document.getElementById('tokenAmount').value;
+    const tx = await contract.removeLiquidity(ethers.utils.parseUnits(amountBCH, 'ether'));
+    await tx.wait();
 
-    statusDiv.textContent = `Adding ${bchAmount} BCH and ${tokenAmount} Xolos $RMZ tokens to the liquidity pool...`;
-
-    try {
-        await contract.methods.addLiquidity(tokenAmount).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
-        statusDiv.textContent = `Successfully added liquidity: ${bchAmount} BCH and ${tokenAmount} Xolos $RMZ tokens.`;
-    } catch (error) {
-        statusDiv.textContent = `Error: ${error.message}`;
-        console.error('Add liquidity error:', error);
-    }
+    console.log('Liquidity removed:', tx);
 }
 
-async function swapBCHForToken() {
-    const statusDiv = document.getElementById('status');
-    if (!wallet) {
-        statusDiv.textContent = 'Please connect your wallet first.';
-        return;
-    }
+async function swapBCHForToken(bchAmount) {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    const bchAmount = document.getElementById('bchAmount').value;
-    const minTokens = document.getElementById('minTokens').value;
+    const tx = await contract.swapBCHForToken({ value: ethers.utils.parseUnits(bchAmount, 'ether') });
+    await tx.wait();
 
-    statusDiv.textContent = `Swapping ${bchAmount} BCH for at least ${minTokens} Xolos $RMZ tokens...`;
+    console.log('BCH swapped for Tokens:', tx);
+}
 
-    try {
-        await contract.methods.swapBCHForToken(minTokens).send({ from: wallet, value: web3.utils.toWei(bchAmount, 'ether') });
-        statusDiv.textContent = `Successfully swapped ${bchAmount} BCH for at least ${minTokens} Xolos $RMZ tokens.`;
-    } catch (error) {
-        statusDiv.textContent = `Error: ${error.message}`;
-        console.error('Swap error:', error);
-    }
+async function swapTokenForBCH(tokenAmount) {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+    const tx = await contract.swapTokenForBCH(tokenAmount);
+    await tx.wait();
+
+    console.log('Tokens swapped for BCH:', tx);
+}
+
+async function updateTokenPrice(newPrice) {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const account = accounts[0];
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+    const tx = await contract.updateTokenPrice(newPrice);
+    await tx.wait();
+
+    console.log('Token price updated:', tx);
 }
