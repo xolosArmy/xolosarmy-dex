@@ -4,88 +4,74 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract LiquidityPoolWithAMM is ReentrancyGuard {
+contract FixedPriceLiquidityPool is ReentrancyGuard {
     IERC20 public immutable token;
     address public immutable owner;
-    uint256 public totalLiquidity;
+    uint256 public tokenPriceInBCH; // Fixed price in wei
 
     mapping(address => uint256) public liquidity;
 
     event LiquidityAdded(address indexed provider, uint256 amountBCH, uint256 amountToken);
     event LiquidityRemoved(address indexed provider, uint256 amountBCH, uint256 amountToken);
-    event Swapped(address indexed swapper, uint256 amountIn, uint256 amountOut, bool isBCHToToken);
+    event Swapped(address indexed swapper, uint256 amountBCH, uint256 amountToken, bool isBCHToToken);
 
     constructor(address _token) {
         token = IERC20(_token);
         owner = msg.sender;
+        tokenPriceInBCH = 6.73 ether; // Fixed price of 6.73 BCH per 1 Xolos $RMZ token
     }
 
-    function addLiquidity(uint256 tokenAmount) external payable nonReentrant returns (uint256) {
+    function addLiquidity(uint256 tokenAmount) external payable nonReentrant {
         require(msg.value > 0 && tokenAmount > 0, "Insufficient amounts");
         
-        uint256 liquidityMinted = msg.value;
-        liquidity[msg.sender] += liquidityMinted;
-        totalLiquidity += liquidityMinted;
-
+        liquidity[msg.sender] += msg.value;
         require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
 
         emit LiquidityAdded(msg.sender, msg.value, tokenAmount);
-        return liquidityMinted;
     }
 
-    function removeLiquidity(uint256 amount) external nonReentrant returns (uint256, uint256) {
-        require(liquidity[msg.sender] >= amount, "Insufficient liquidity");
+    function removeLiquidity(uint256 amountBCH) external nonReentrant {
+        require(liquidity[msg.sender] >= amountBCH, "Insufficient liquidity");
 
-        uint256 tokenAmount = (amount * token.balanceOf(address(this))) / address(this).balance;
-        
-        liquidity[msg.sender] -= amount;
-        totalLiquidity -= amount;
+        uint256 tokenAmount = (amountBCH * token.balanceOf(address(this))) / address(this).balance;
 
-        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        liquidity[msg.sender] -= amountBCH;
+
+        (bool success, ) = payable(msg.sender).call{value: amountBCH}("");
         require(success, "BCH transfer failed");
 
         require(token.transfer(msg.sender, tokenAmount), "Token transfer failed");
 
-        emit LiquidityRemoved(msg.sender, amount, tokenAmount);
-        return (amount, tokenAmount);
+        emit LiquidityRemoved(msg.sender, amountBCH, tokenAmount);
     }
 
-    function swapBCHForToken(uint256 minTokens) external payable nonReentrant {
-        uint256 bchAmount = msg.value;
-        require(bchAmount > 0, "BCH amount must be greater than zero");
+    function swapBCHForToken() external payable nonReentrant {
+        require(msg.value > 0, "BCH amount must be greater than zero");
 
-        uint256 tokenReserve = token.balanceOf(address(this));
-        uint256 bchReserve = address(this).balance - bchAmount;
-        require(bchReserve > 0 && tokenReserve > 0, "Insufficient liquidity");
-
-        uint256 tokenAmount = getAmountOut(bchAmount, bchReserve, tokenReserve);
-        require(tokenAmount >= minTokens, "Insufficient output amount");
+        uint256 tokenAmount = (msg.value * 1e18) / tokenPriceInBCH;
+        require(token.balanceOf(address(this)) >= tokenAmount, "Insufficient token balance");
 
         require(token.transfer(msg.sender, tokenAmount), "Token transfer failed");
 
-        emit Swapped(msg.sender, bchAmount, tokenAmount, true);
+        emit Swapped(msg.sender, msg.value, tokenAmount, true);
     }
 
-    function swapTokenForBCH(uint256 tokenAmount, uint256 minBCH) external nonReentrant {
-        require(tokenAmount > 0, "Insufficient token amount");
+    function swapTokenForBCH(uint256 tokenAmount) external nonReentrant {
+        require(tokenAmount > 0, "Token amount must be greater than zero");
 
-        uint256 bchReserve = address(this).balance;
-        uint256 tokenReserve = token.balanceOf(address(this));
-        uint256 bchAmount = getAmountOut(tokenAmount, tokenReserve, bchReserve);
+        uint256 bchAmount = (tokenAmount * tokenPriceInBCH) / 1e18;
+        require(address(this).balance >= bchAmount, "Insufficient BCH balance");
 
-        require(bchAmount >= minBCH, "Insufficient output amount");
         require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
 
         (bool success, ) = payable(msg.sender).call{value: bchAmount}("");
         require(success, "BCH transfer failed");
 
-        emit Swapped(msg.sender, tokenAmount, bchAmount, false);
+        emit Swapped(msg.sender, bchAmount, tokenAmount, false);
     }
 
-    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) internal pure returns (uint256) {
-        uint256 amountInWithFee = amountIn * 997; // Apply a fee, e.g., 0.3%
-        uint256 numerator = amountInWithFee * reserveOut;
-        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
-        return numerator / denominator;
+    function updateTokenPrice(uint256 newPrice) external {
+        require(msg.sender == owner, "Only owner can update token price");
+        tokenPriceInBCH = newPrice;
     }
 }
